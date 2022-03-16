@@ -3,47 +3,31 @@ require_relative 'time_formatter'
 class App
 
   def call(env)
-    @request = Rack::Request.new(env)
-    create_response
-    [status, headers, body]
+    request = Rack::Request.new(env)
+    create_response(request)
   end
 
   private
 
-  def create_response
-    return path_not_found if @request.path_info != '/time'
+  def create_response(request)
+    return response(404, "Not found") if request.path_info != '/time'
 
-    @time_formatter = TimeFormatter.new(@request.params)
-    return invalid_format if !@time_formatter.valid?
+    time_formatter = TimeFormatter.new(request.params)
+    time_formatter.call
 
-    successfully_formatted
+    if !time_formatter.unknown_formats.empty?
+     return response(400, "Unknown time format #{time_formatter.unknown_formats}")
+    end
+
+    response(200, "#{time_formatter.formatted_time}")  
   end
 
-  def status
-    @status
-  end
-
-  def headers
-    { 'Content-Type' => 'text/plain' }
-  end
-
-  def body
-    [ @body ]
-  end
-
-  def successfully_formatted
-    @status = 200
-    @body = "#{@time_formatter.formatted_time}"
-  end
-
-  def path_not_found
-    @status = 404
-    @body = "Path not found"
-  end
-
-  def invalid_format
-    @status = 400
-    @body = "Unknown time format [#{@time_formatter.invalid_formats.join(", ")}]"
+  def response(status, body)
+    resp = Rack::Response.new
+    resp.status = status
+    resp.header['Content-Type'] = 'text/plain'
+    resp.write(body.to_s)
+    resp.finish
   end
 
 end
