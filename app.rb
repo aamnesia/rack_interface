@@ -15,11 +15,11 @@ class App
     time_formatter = TimeFormatter.new(request.params)
     time_formatter.call
 
-    if !time_formatter.unknown_formats.empty?
-     return response(400, "Unknown time format #{time_formatter.unknown_formats}")
+    if time_formatter.success?
+      response(200, time_formatter.time_string)
+    else
+      response(400, time_formatter.invalid_string)
     end
-
-    response(200, "#{time_formatter.formatted_time}")  
   end
 
   def response(status, body)

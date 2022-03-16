@@ -13,22 +13,9 @@ class TimeFormatter
     @params = params['format'].split(',')
     @available_formats = []
     @unknown_formats = []
-    @formatted_time
   end
 
   def call
-    check_formats
-    format_time
-  end
-
-  private
-
-  def format_time
-    return unless @unknown_formats.empty?
-    @formatted_time = Time.now.strftime(@available_formats.join('-'))
-  end
-
-  def check_formats
     @params.each do |format|
       if TIME_FORMATS[format]
         @available_formats << TIME_FORMATS[format]
@@ -36,6 +23,18 @@ class TimeFormatter
         @unknown_formats << format
       end
     end
+  end
+
+  def success?
+    @unknown_formats.empty?
+  end
+
+  def invalid_string
+    "Unknown time format #{@unknown_formats}"
+  end
+
+  def time_string
+    Time.now.strftime(@available_formats.join('-'))
   end
 
 end
